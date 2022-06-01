@@ -36,11 +36,16 @@ function getPoolAddress(tokenA: string, tokenB: string, fee: BigNumberish){
 
 function getTokens(add: string){
   const reference=new ethers.Contract(add,poolABI,provider);
-  let tokenAAddress=reference.token0();
-  let tokenBAddress=reference.token1();
-  let fee=reference.fee();
+  try{
+    let tokenAAddress=reference.token0();
+    let tokenBAddress=reference.token1();
+    let fee=reference.fee();
 
-  return [tokenAAddress,tokenBAddress,fee];
+    return [tokenAAddress,tokenBAddress,fee];
+  }
+  catch(err){
+    console.log("error");
+  }
 }
 
 export const provideHandleTransaction = (getTokens: any) : HandleTransaction => async (tx : TransactionEvent) => {
