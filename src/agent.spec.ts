@@ -7,12 +7,10 @@
   ethers,
 } from "forta-agent";
 import agent, {
-  ERC20_TRANSFER_EVENT,
-  TETHER_ADDRESS,
-  TETHER_DECIMALS,
+  provideHandleTransaction
 } from "./agent";
 
-describe("high tether transfer agent", () => {
+describe("detect uniswap swaps", () => {
   let handleTransaction: HandleTransaction;
   const mockTxEvent = createTransactionEvent({} as any);
 

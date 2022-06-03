@@ -13,7 +13,10 @@ import{
 }from "ethers"
 
 import{
-  Interface
+  Interface,
+  keccak256,
+  getCreate2Address,
+  defaultAbiCoder
 } from "ethers/lib/utils"
 
 export const uniswapFactoryContract="0x1F98431c8aD98523631AE4a59f267346ea31F984"
@@ -23,6 +26,19 @@ export const swapABI= "event Swap(address sender, address recipient, int256 amou
 let provider=new ethers.providers.JsonRpcProvider(getJsonRpcUrl());
 
 const poolABI = [ "function token0() public view returns (address)", "function token1() public view returns (address)", "function fee() public view returns (uint24)"]
+
+function computeCreate2Address(token0: string, token1: string, fee: BigNumberish){
+
+  if(token0.toLowerCase()>token1.toLowerCase()){
+    let temp:string=token0;
+    token0=token1;
+    token1=temp;
+  }
+  const salt = keccak256(defaultAbiCoder.encode(["string","string","uint24"],[token0,token1,fee]));
+  const initCodeHash = "0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54";
+
+  return getCreate2Address(uniswapFactoryContract, salt, initCodeHash);
+}
 
 function getPoolAddress(tokenA: string, tokenB: string, fee: BigNumberish){
   const getPoolAbi='function getPool(address, address, uint24) public view returns (address)'
@@ -59,7 +75,7 @@ export const provideHandleTransaction = (getTokens: any) : HandleTransaction => 
 
       const [tokenAAddress,tokenBAddress,fee] = getTokens(contractAddress.toLowerCase());
 
-      if(getPoolAddress(tokenAAddress,tokenBAddress,fee).toLowerCase()===contractAddress.toLowerCase()){
+      if(computeCreate2Address(tokenAAddress,tokenBAddress,fee).toLowerCase()===contractAddress.toLowerCase()){
         findings.push(
           Finding.fromObject({
             name: "uniswapV3 swap",
