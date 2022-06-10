@@ -27,7 +27,7 @@ export function computeCreate2Address(
   token1: string,
   fee: BigNumberish
 ) {
-  if (token0.toLowerCase() > token1.toLowerCase()) {
+  if (token0 > token1) {
     let temp: string = token0;
     token0 = token1;
     token1 = temp;
@@ -81,7 +81,6 @@ export const provideHandleTransaction =
     console.log("before");
     const swaps = await tx.filterLog(SWAP_ABI);
     console.log("after");
-    console.log(swaps);
 
     for (let object of swaps) {
       const contractAddress = object.address;
