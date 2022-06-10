@@ -67,7 +67,6 @@ describe("detect uniswap swaps", () => {
       const eventInterface=new Interface([SWAP_ABI]);
       const event = eventInterface.getEvent("Swap");
       const mimic=eventInterface.encodeEventLog(event, [createAddress("0xabc"),createAddress("0xcba"),"0x78","0x98","0x56","0x789","123"]);
-      txEvent.addAnonymousEventLog(createAddress(DAI_USDC_POOL),mimic.data, ...mimic.topics);
       const findings = await handleTransaction(txEvent);
       expect(findings).toEqual([createFinding(computeCreate2Address(DAI_CONTRACT,USDC_CONTRACT,100),DAI_CONTRACT,USDC_CONTRACT,100)]);
   })
