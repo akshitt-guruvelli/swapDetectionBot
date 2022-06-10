@@ -58,14 +58,18 @@ function getPoolAddress(tokenA: string, tokenB: string, fee: BigNumberish) {
 
 function getTokens(add: string) {
   const reference = new ethers.Contract(add, POOL_ABI, provider);
+  let tokenAAddress = "";
+  let tokenBAddress = "";
+  let fee = "";
   try {
-    let tokenAAddress = reference.token0();
-    let tokenBAddress = reference.token1();
-    let fee = reference.fee();
+    tokenAAddress = reference.token0();
+    tokenBAddress = reference.token1();
+    fee = reference.fee();
 
     return [tokenAAddress, tokenBAddress, fee];
   } catch (err) {
     console.log("error");
+    return [tokenAAddress, tokenBAddress, fee];
   }
 }
 

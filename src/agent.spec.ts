@@ -60,11 +60,16 @@ describe("detect uniswap swaps", () => {
       const findings = await handleTransaction(txEvent);
       expect(findings).toEqual([]);
     });
-    /*it("returns a finding if there is a swap event emitted by pool contract", async () => {
+    it("returns a finding if there is a swap event emitted by pool contract", async () => {
 
       when(mocker).calledWith(createAddress(DAI_USDC_POOL)).mockReturnValue([DAI_CONTRACT,USDC_CONTRACT,100]);
       const txEvent = new TestTransactionEvent().setFrom("0x11");
-      const eventInterface=new Interface([SWAP_ABI]);*/
-
+      const eventInterface=new Interface([SWAP_ABI]);
+      const event = eventInterface.getEvent("Swap");
+      const mimic=eventInterface.encodeEventLog(event, [createAddress("0xabc"),createAddress("0xcba"),"0x78","0x98","0x56","0x789","123"]);
+      txEvent.addAnonymousEventLog(createAddress(DAI_USDC_POOL),mimic.data, ...mimic.topics);
+      const findings = await handleTransaction(txEvent);
+      expect(findings).toEqual([createFinding(computeCreate2Address(DAI_CONTRACT,USDC_CONTRACT,100),DAI_CONTRACT,USDC_CONTRACT,100)]);
   })
+});
 });
