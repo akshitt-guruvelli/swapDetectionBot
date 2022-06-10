@@ -1,4 +1,4 @@
-/*import {
+import {
   FindingType,
   FindingSeverity,
   Finding,
@@ -7,66 +7,64 @@
   ethers,
 } from "forta-agent";
 import agent, {
-  provideHandleTransaction
+  provideHandleTransaction,
+  computeCreate2Address
 } from "./agent";
+import{
+  DAI_CONTRACT,
+  USDC_CONTRACT,
+  DAI_USDC_POOL,
+  SWAP_ABI
+} from "./utils";
+import{
+  BigNumberish
+} from 'ethers';
+import { getCreate2Address, defaultAbiCoder, keccak256, Interface } from "ethers/lib/utils";
+import{
+  createAddress,
+  TestTransactionEvent
+} from 'forta-agent-tools/lib/tests';
+import {when} from 'jest-when';
+
+function createFinding(contractAddress:string,tokenAAddress:string,tokenBAddress:string,fee:any){
+  Finding.fromObject({
+    name: "uniswapV3 swap",
+    description:
+      "uniswap V3 swap has taken place involving tokens ${tokenAAddress} and ${tokenBAddress}",
+    alertId: "FORTA-1",
+    type: FindingType.Info,
+    severity: FindingSeverity.Info,
+    metadata: {
+      contractAddress,
+      tokenAAddress,
+      tokenBAddress,
+      fee
+    },
+  })
+}
+
 
 describe("detect uniswap swaps", () => {
   let handleTransaction: HandleTransaction;
-  const mockTxEvent = createTransactionEvent({} as any);
+  const mocker=jest.fn();
 
   beforeAll(() => {
-    handleTransaction = agent.handleTransaction;
+    handleTransaction = provideHandleTransaction(mocker);
+    mocker.mockClear();
   });
 
   describe("handleTransaction", () => {
-    it("returns empty findings if there are no Tether transfers", async () => {
-      mockTxEvent.filterLog = jest.fn().mockReturnValue([]);
+    it("returns empty findings if there are no swaps", async () => {
 
-      const findings = await handleTransaction(mockTxEvent);
-
-      expect(findings).toStrictEqual([]);
-      expect(mockTxEvent.filterLog).toHaveBeenCalledTimes(1);
-      expect(mockTxEvent.filterLog).toHaveBeenCalledWith(
-        ERC20_TRANSFER_EVENT,
-        TETHER_ADDRESS
-      );
+      const txEvent = new TestTransactionEvent().setFrom("0x11").setTo("0x22");
+      const findings = await handleTransaction(txEvent);
+      expect(findings).toEqual([]);
     });
+    /*it("returns a finding if there is a swap event emitted by pool contract", async () => {
 
-    it("returns a finding if there is a Tether transfer over 10,000", async () => {
-      const mockTetherTransferEvent = {
-        args: {
-          from: "0xabc",
-          to: "0xdef",
-          value: ethers.BigNumber.from("20000000000"), //20k with 6 decimals
-        },
-      };
-      mockTxEvent.filterLog = jest
-        .fn()
-        .mockReturnValue([mockTetherTransferEvent]);
+      when(mocker).calledWith(createAddress(DAI_USDC_POOL)).mockReturnValue([DAI_CONTRACT,USDC_CONTRACT,100]);
+      const txEvent = new TestTransactionEvent().setFrom("0x11");
+      const eventInterface=new Interface([SWAP_ABI]);*/
 
-      const findings = await handleTransaction(mockTxEvent);
-
-      const normalizedValue = mockTetherTransferEvent.args.value.div(
-        10 ** TETHER_DECIMALS
-      );
-      expect(findings).toStrictEqual([
-        Finding.fromObject({
-          name: "High Tether Transfer",
-          description: `High amount of USDT transferred: ${normalizedValue}`,
-          alertId: "FORTA-1",
-          severity: FindingSeverity.Low,
-          type: FindingType.Info,
-          metadata: {
-            to: mockTetherTransferEvent.args.to,
-            from: mockTetherTransferEvent.args.from,
-          },
-        }),
-      ]);
-      expect(mockTxEvent.filterLog).toHaveBeenCalledTimes(1);
-      expect(mockTxEvent.filterLog).toHaveBeenCalledWith(
-        ERC20_TRANSFER_EVENT,
-        TETHER_ADDRESS
-      );
-    });
-  });
-});*/
+  })
+});
