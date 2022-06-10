@@ -27,14 +27,14 @@ export function computeCreate2Address(
   token1: string,
   fee: BigNumberish
 ) {
-  if (token0 > token1) {
+  if (token0.toLowerCase() > token1.toLowerCase()) {
     let temp: string = token0;
     token0 = token1;
     token1 = temp;
   }
   const salt = keccak256(
     defaultAbiCoder.encode(
-      ["string", "string", "uint24"],
+      ["address", "address", "uint24"],
       [token0, token1, fee]
     )
   );
@@ -56,15 +56,15 @@ function getPoolAddress(tokenA: string, tokenB: string, fee: BigNumberish) {
   return poolAddress;
 }
 
-function getTokens(add: string) {
+async function getTokens(add: string) {
   const reference = new ethers.Contract(add, POOL_ABI, provider);
   let tokenAAddress = "";
   let tokenBAddress = "";
   let fee = "";
   try {
-    tokenAAddress = reference.token0();
-    tokenBAddress = reference.token1();
-    fee = reference.fee();
+    tokenAAddress =await reference.token0();
+    tokenBAddress =await reference.token1();
+    fee =await reference.fee();
 
     return [tokenAAddress, tokenBAddress, fee];
   } catch (err) {
@@ -78,14 +78,12 @@ export const provideHandleTransaction =
   async (tx: TransactionEvent) => {
     const findings: Finding[] = [];
 
-    console.log("before");
-    const swaps = await tx.filterLog(SWAP_ABI);
-    console.log("after");
+    const swaps = tx.filterLog(SWAP_ABI);
 
     for (let object of swaps) {
       const contractAddress = object.address;
 
-      const [tokenAAddress, tokenBAddress, fee] = getTokens(
+      const [tokenAAddress, tokenBAddress, fee] = await getTokens(
         contractAddress.toLowerCase()
       );
 
@@ -112,7 +110,6 @@ export const provideHandleTransaction =
         );
       }
     }
-    console.log(findings);
     return findings;
   };
 
